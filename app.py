@@ -9,12 +9,15 @@ import pandas as pd
 import pickle
 import os
 from fpdf import FPDF
+import matplotlib
+matplotlib.use('Agg')  # Use Agg backend for non-GUI rendering
 import matplotlib.pyplot as plt
 import seaborn as sns
 import io
 import base64
 from datetime import datetime
 import logging
+import tempfile
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
@@ -110,8 +113,13 @@ class PDF(FPDF):
 
     def add_image_from_base64(self, base64_data, x, y, w, h):
         img_data = base64.b64decode(base64_data)
-        img_file = io.BytesIO(img_data)
-        self.image(img_file, x, y, w, h)
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp_file:
+            tmp_file.write(img_data)
+            tmp_file_path = tmp_file.name
+        try:
+            self.image(tmp_file_path, x, y, w, h)
+        finally:
+            os.unlink(tmp_file_path)
 
 # Login required decorator
 def login_required(f):
@@ -405,6 +413,9 @@ def download_insights():
         flash('Access denied!', 'danger')
         return redirect(url_for('home'))
 
+    # Fetch recent predictions
+    predictions = Prediction.query.order_by(Prediction.timestamp.desc()).limit(10).all()
+    
     # Recalculate statistics
     total_predictions = Prediction.query.count()
     unique_users = db.session.query(Prediction.user_id).distinct().count()
@@ -491,6 +502,29 @@ def download_insights():
     pdf = PDF()
     pdf.add_page()
     
+    # Add Recent Predictions
+    pdf.chapter_title('Recent Predictions')
+    if predictions:
+        header = "User ID | Pressure (hPa) | Dewpoint (°C) | Humidity (%) | Cloud Cover (%) | Sunshine (hours) | Windspeed (km/h) | Result | Timestamp"
+        pdf.chapter_body(header)
+        pdf.chapter_body("-" * 100)
+        for pred in predictions:
+            row = (
+                f"{pred.user_id} | "
+                f"{round(pred.pressure, 2)} | "
+                f"{round(pred.dewpoint, 2)} | "
+                f"{round(pred.humidity, 2)} | "
+                f"{round(pred.cloud, 2)} | "
+                f"{round(pred.sunshine, 2)} | "
+                f"{round(pred.windspeed, 2)} | "
+                f"{pred.result} | "
+                f"{pred.timestamp}"
+            )
+            pdf.chapter_body(row)
+    else:
+        pdf.chapter_body("No recent predictions available.")
+    pdf.ln(10)
+
     # Add Statistics
     pdf.chapter_title('Prediction Statistics')
     pdf.chapter_body(f"Total Predictions: {total_predictions}\n")
@@ -504,6 +538,7 @@ def download_insights():
         f"Sunshine: {round(avg_inputs[4] if avg_inputs[4] is not None else 0.0, 2)} hours\n"
         f"Windspeed: {round(avg_inputs[5] if avg_inputs[5] is not None else 0.0, 2)} km/h\n"
     )
+    pdf.ln(10)
 
     # Add Visualizations
     if plot_url1:
@@ -520,6 +555,7 @@ def download_insights():
         pdf.ln(85)
     else:
         pdf.chapter_body('No prediction trend data available.')
+        pdf.ln(10)
 
     # Save PDF
     pdf_file = f'static/downloads/insights_{datetime.now().strftime("%Y%m%d_%H%M%S")}.pdf'

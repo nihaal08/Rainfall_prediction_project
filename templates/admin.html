@@ -1,75 +1,106 @@
 {% extends 'base.html' %}
 {% block content %}
     <div class="admin-container">
-        <h1>Admin Dashboard</h1>
-        <h2>Recent Predictions</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>User ID</th>
-                    <th>Pressure (hPa)</th>
-                    <th>Dewpoint (°C)</th>
-                    <th>Humidity (%)</th>
-                    <th>Cloud Cover (%)</th>
-                    <th>Sunshine (hours)</th>
-                    <th>Windspeed (km/h)</th>
-                    <th>Result</th>
-                    <th>Timestamp</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for prediction in predictions %}
+        <h1 class="dashboard-title">Admin Dashboard</h1>
+
+        <!-- Recent Predictions Card -->
+        <div class="card section-spacing">
+            <h2 class="card-title">Recent Predictions</h2>
+            <table class="predictions-table">
+                <thead>
                     <tr>
-                        <td>{{ prediction.user_id }}</td>
-                        <td>{{ prediction.pressure }}</td>
-                        <td>{{ prediction.dewpoint }}</td>
-                        <td>{{ prediction.humidity }}</td>
-                        <td>{{ prediction.cloud }}</td>
-                        <td>{{ prediction.sunshine }}</td>
-                        <td>{{ prediction.windspeed }}</td>
-                        <td>{{ prediction.result }}</td>
-                        <td>{{ prediction.timestamp }}</td>
+                        <th>User ID</th>
+                        <th>Pressure (hPa)</th>
+                        <th>Dewpoint (°C)</th>
+                        <th>Humidity (%)</th>
+                        <th>Cloud Cover (%)</th>
+                        <th>Sunshine (hours)</th>
+                        <th>Windspeed (km/h)</th>
+                        <th>Result</th>
+                        <th>Timestamp</th>
                     </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        <h2>Prediction Statistics</h2>
-        <p>Total Predictions: {{ total_predictions }}</p>
-        <p>Unique Users: {{ unique_users }}</p>
-        <p>Average Inputs:</p>
-        <ul>
-            <li>Pressure: {{ avg_inputs[0]|round(2) }} hPa</li>
-            <li>Dewpoint: {{ avg_inputs[1]|round(2) }} °C</li>
-            <li>Humidity: {{ avg_inputs[2]|round(2) }} %</li>
-            <li>Cloud Cover: {{ avg_inputs[3]|round(2) }} %</li>
-            <li>Sunshine: {{ avg_inputs[4]|round(2) }} hours</li>
-            <li>Windspeed: {{ avg_inputs[5]|round(2) }} km/h</li>
-        </ul>
-        <h2>Data Visualizations</h2>
-        {% if plot_url1 %}
-            <div class="visualization">
-                <h3>Rainfall Distribution</h3>
-                <img src="data:image/png;base64,{{ plot_url1 }}" alt="Rainfall Distribution">
+                </thead>
+                <tbody>
+                    {% for prediction in predictions %}
+                        <tr class="{{ loop.cycle('odd-row', 'even-row') }}">
+                            <td>{{ prediction.user_id }}</td>
+                            <td>{{ prediction.pressure|round(2) }}</td>
+                            <td>{{ prediction.dewpoint|round(2) }}</td>
+                            <td>{{ prediction.humidity|round(2) }}</td>
+                            <td>{{ prediction.cloud|round(2) }}</td>
+                            <td>{{ prediction.sunshine|round(2) }}</td>
+                            <td>{{ prediction.windspeed|round(2) }}</td>
+                            <td>{{ prediction.result }}</td>
+                            <td>{{ prediction.timestamp }}</td>
+                        </tr>
+                    {% endfor %}
+                    {% if not predictions %}
+                        <tr>
+                            <td colspan="9">No recent predictions available.</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Prediction Statistics Card -->
+        <div class="card section-spacing">
+            <h2 class="card-title">Prediction Statistics</h2>
+            <div class="stats-grid">
+                <div class="stats-item">
+                    <p><strong>Total Predictions:</strong> {{ total_predictions }}</p>
+                    <p><strong>Unique Users:</strong> {{ unique_users }}</p>
+                </div>
+                <div class="stats-item">
+                    <p><strong>Average Inputs:</strong></p>
+                    <ul class="stats-list">
+                        <li>Pressure: {{ avg_inputs[0]|default(0.0)|round(2) }} hPa</li>
+                        <li>Dewpoint: {{ avg_inputs[1]|default(0.0)|round(2) }} °C</li>
+                        <li>Humidity: {{ avg_inputs[2]|default(0.0)|round(2) }} %</li>
+                        <li>Cloud Cover: {{ avg_inputs[3]|default(0.0)|round(2) }} %</li>
+                        <li>Sunshine: {{ avg_inputs[4]|default(0.0)|round(2) }} hours</li>
+                        <li>Windspeed: {{ avg_inputs[5]|default(0.0)|round(2) }} km/h</li>
+                    </ul>
+                </div>
             </div>
-        {% endif %}
-        {% if plot_url2 %}
-            <div class="visualization">
-                <h3>Humidity vs Rainfall</h3>
-                <img src="data:image/png;base64,{{ plot_url2 }}" alt="Humidity vs Rainfall">
-            </div>
-        {% endif %}
-        {% if plot_url3 %}
-            <div class="visualization">
-                <h3>Prediction Trend Over Time</h3>
-                <img src="data:image/png;base64,{{ plot_url3 }}" alt="Prediction Trend Over Time">
-            </div>
-        {% else %}
-            <div class="visualization">
-                <h3>Prediction Trend Over Time</h3>
-                <p>No prediction data available to display trend. Make more predictions to see the trend.</p>
-            </div>
-        {% endif %}
-        <div class="back-button-container">
+            <a href="{{ url_for('download_insights') }}" class="btn download-btn">Download PDF</a>
+        </div>
+
+        <!-- Data Visualizations Card -->
+        <div class="card section-spacing">
+            <h2 class="card-title">Data Visualizations</h2>
+            {% if plot_url1 or plot_url2 or plot_url3 %}
+                <div class="visualizations-grid">
+                    {% if plot_url1 %}
+                        <div class="visualization">
+                            <h3>Rainfall Distribution</h3>
+                            <img src="data:image/png;base64,{{ plot_url1 }}" alt="Rainfall Distribution">
+                        </div>
+                    {% endif %}
+                    {% if plot_url2 %}
+                        <div class="visualization">
+                            <h3>Humidity vs Rainfall</h3>
+                            <img src="data:image/png;base64,{{ plot_url2 }}" alt="Humidity vs Rainfall">
+                        </div>
+                    {% endif %}
+                    {% if plot_url3 %}
+                        <div class="visualization">
+                            <h3>Prediction Trend Over Time</h3>
+                            <img src="data:image/png;base64,{{ plot_url3 }}" alt="Prediction Trend Over Time">
+                        </div>
+                    {% else %}
+                        <div class="visualization">
+                            <h3>Prediction Trend Over Time</h3>
+                            <p>No prediction data available to display trend. Make more predictions to see the trend.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            {% else %}
+                <p>No visualizations available. Upload or generate data to see visualizations.</p>
+            {% endif %}
+        </div>
+
+        <div class="back-button-container section-spacing">
             <a href="{{ url_for('home') }}" class="btn back-btn">Back to Home</a>
         </div>
     </div>
