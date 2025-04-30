@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - RainCast AI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    <div class="login-wrapper">
+        <div class="login-container">
+            <form method="POST" class="login-form">
+                <h1>Admin Login</h1>
+                {{ form.hidden_tag() }}
+                <label for="identifier">Username or Email</label>
+                {{ form.identifier(class="form-input") }}
+                {% if form.identifier.errors %}
+                    <div class="error">{{ form.identifier.errors[0] }}</div>
+                {% endif %}
+                <label for="password">Password</label>
+                {{ form.password(class="form-input") }}
+                {% if form.password.errors %}
+                    <div class="error">{{ form.password.errors[0] }}</div>
+                {% endif %}
+                {{ form.submit(class="btn") }}
+            </form>
+        </div>
+        <div class="welcome-container">
+            <h1>Admin Access</h1>
+            <p>Login to manage the RainCast AI platform and view detailed analytics.</p>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

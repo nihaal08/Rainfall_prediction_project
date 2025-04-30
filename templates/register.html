@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - RainCast AI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="login-wrapper">
+        <div class="login-container">
+            <form method="POST" class="login-form">
+                <h1>Create Account</h1>
+                {{ form.hidden_tag() }}
+                <label for="username">Username</label>
+                {{ form.username(class="form-input") }}
+                {% if form.username.errors %}
+                    <div class="error">{{ form.username.errors[0] }}</div>
+                {% endif %}
+                <label for="full_name">Full Name</label>
+                {{ form.full_name(class="form-input") }}
+                {% if form.full_name.errors %}
+                    <div class="error">{{ form.full_name.errors[0] }}</div>
+                {% endif %}
+                <label for="email">Email</label>
+                {{ form.email(class="form-input") }}
+                {% if form.email.errors %}
+                    <div class="error">{{ form.email.errors[0] }}</div>
+                {% endif %}
+                <label for="password">Password</label>
+                {{ form.password(class="form-input") }}
+                {% if form.password.errors %}
+                    <div class="error">{{ form.password.errors[0] }}</div>
+                {% endif %}
+                <label for="confirm_password">Confirm Password</label>
+                {{ form.confirm_password(class="form-input") }}
+                {% if form.confirm_password.errors %}
+                    <div class="error">{{ form.confirm_password.errors[0] }}</div>
+                {% endif %}
+                {{ form.submit(class="btn") }}
+                <p>Already have an account? <a href="{{ url_for('login') }}">Login</a></p>
+            </form>
+        </div>
+        <div class="welcome-container">
+            <h1>Join RainCast AI</h1>
+            <p>Create an account to access our cutting-edge rainfall prediction tool and stay ahead of the weather.</p>
+        </div>
+    </div>
+</body>
+</html>

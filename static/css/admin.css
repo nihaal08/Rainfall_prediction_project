@@ -1,0 +1,136 @@
+.admin-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 30px;
+    background: #FFFFFF;
+    border-radius: 15px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    color: #0A3D62;
+}
+
+.admin-container h1 {
+    font-size: 32px;
+    font-weight: 700;
+    color: #0A3D62;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.admin-container h2 {
+    font-size: 24px;
+    font-weight: 600;
+    color: #0A3D62;
+    margin-top: 30px;
+    margin-bottom: 15px;
+}
+
+.admin-container h3 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #0A3D62;
+    margin-bottom: 10px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #F9FAFB;
+    margin-bottom: 30px;
+}
+
+table th,
+table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #E0E0E0;
+}
+
+table th {
+    background: #0A3D62;
+    color: #FFFFFF;
+    font-weight: 600;
+}
+
+table tr:nth-child(even) {
+    background: #F1F5F9;
+}
+
+table tr:hover {
+    background: #E0E7FF;
+    transition: background 0.3s;
+}
+
+ul {
+    list-style: none;
+    padding-left: 20px;
+}
+
+ul li {
+    margin-bottom: 10px;
+    color: #1E293B;
+}
+
+ul li:before {
+    content: "•";
+    color: #E0A96D;
+    font-weight: bold;
+    display: inline-block;
+    width: 1em;
+    margin-left: -1em;
+}
+
+.visualization {
+    margin-bottom: 30px;
+}
+
+.visualization img {
+    max-width: 100%;
+    height: auto;
+    border: 1px solid #E0E0E0;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    display: block;
+    margin: 0 auto;
+}
+
+.back-button-container {
+    text-align: left;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+.back-btn {
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #FFFFFF;
+    background: #0A3D62;
+    border-radius: 5px;
+    text-decoration: none;
+    transition: background 0.3s ease;
+}
+
+.back-btn:hover {
+    background: #3E7C97;
+}
+
+@media (max-width: 768px) {
+    .admin-container {
+        padding: 15px;
+    }
+
+    table th,
+    table td {
+        font-size: 14px;
+        padding: 10px;
+    }
+
+    .back-btn {
+        padding: 8px 16px;
+        font-size: 14px;
+    }
+
+    .visualization img {
+        max-width: 100%;
+    }
+}

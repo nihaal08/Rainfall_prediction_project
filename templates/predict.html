@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% block content %}
+    <div class="predict">
+        <h1>Predict Rainfall</h1>
+        <form method="POST" class="predict-form">
+            <div class="input-group">
+                <label for="pressure">Pressure (hPa)</label>
+                <div class="input-wrapper">
+                    <input type="number" step="any" id="pressure" name="pressure" required>
+                    <span class="tooltip">Atmospheric pressure measured in hectopascals.</span>
+                </div>
+            </div>
+            <div class="input-group">
+                <label for="dewpoint">Dewpoint (°C)</label>
+                <div class="input-wrapper">
+                    <input type="number" step="any" id="dewpoint" name="dewpoint" required>
+                    <span class="tooltip">Temperature at which air becomes saturated, measured in °C.</span>
+                </div>
+            </div>
+            <div class="input-group">
+                <label for="humidity">Humidity (%)</label>
+                <div class="input-wrapper">
+                    <input type="number" step="any" id="humidity" name="humidity" required>
+                    <span class="tooltip">Percentage of moisture in the air.</span>
+                </div>
+            </div>
+            <div class="input-group">
+                <label for="cloud">Cloud Cover (%)</label>
+                <div class="input-wrapper">
+                    <input type="number" step="any" id="cloud" name="cloud" required>
+                    <span class="tooltip">Percentage of sky covered by clouds.</span>
+                </div>
+            </div>
+            <div class="input-group">
+                <label for="sunshine">Sunshine (hours)</label>
+                <div class="input-wrapper">
+                    <input type="number" step="any" id="sunshine" name="sunshine" required>
+                    <span class="tooltip">Hours of direct sunlight in a day.</span>
+                </div>
+            </div>
+            <div class="input-group">
+                <label for="windspeed">Windspeed (km/h)</label>
+                <div class="input-wrapper">
+                    <input type="number" step="any" id="windspeed" name="windspeed" required>
+                    <span class="tooltip">Speed of wind measured in kilometers per hour.</span>
+                </div>
+            </div>
+            <div class="button-group">
+                <button type="submit" class="btn">Predict</button>
+            </div>
+        </form>
+        {% if prediction %}
+            <div class="modal" id="predictionModal">
+                <div class="modal-content">
+                    <h2>Prediction Result</h2>
+                    <p>{{ prediction }}</p>
+                    <a href="{{ url_for('download_file', filename=pdf_file) }}" class="btn">Download Report</a>
+                    <button class="btn close-btn" onclick="closeModal()">Close</button>
+                </div>
+            </div>
+        {% endif %}
+        <div class="back-button-container">
+            <a href="{{ url_for('home') }}" class="btn back-btn">Back to Home</a>
+        </div>
+    </div>
+{% endblock %}

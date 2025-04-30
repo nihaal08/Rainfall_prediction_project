@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block content %}
+    <div class="container">
+        <div class="about">
+            <h2>About RainCast AI</h2>
+            <div class="about-content">
+                <div class="about-text">
+                    <p>RainCast AI leverages machine learning to provide accurate rainfall predictions, helping farmers, researchers, and weather enthusiasts make informed decisions.</p>
+                    <p>Our platform uses a Random Forest model trained on historical weather data to predict rainfall based on parameters like:</p>
+                    <ul>
+                        <li>Pressure</li>
+                        <li>Dewpoint</li>
+                        <li>Humidity</li>
+                        <li>Cloud Cover</li>
+                        <li>Sunshine</li>
+                        <li>Windspeed</li>
+                    </ul>
+                    <p>Built with Flask, our application ensures a seamless user experience.</p>
+                </div>
+                <div class="about-image">
+                    <img src="https://images.unsplash.com/photo-1501696461415-6bd6660c6742" alt="Weather Analysis">
+                </div>
+            </div>
+        </div>
+        <div class="back-button-container">
+            <a href="{{ url_for('home') }}" class="btn back-btn">Back to Home</a>
+        </div>
+    </div>
+{% endblock %}
