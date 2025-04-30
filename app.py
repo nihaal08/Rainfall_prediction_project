@@ -96,7 +96,7 @@ with app.app_context():
 class PDF(FPDF):
     def header(self):
         self.set_font('Arial', 'B', 12)
-        self.cell(0, 10, 'RainCast AI Prediction Report', 0, 1, 'C')
+        self.cell(0, 10, 'RainCast AI Admin Insights Report', 0, 1, 'C')
 
     def chapter_title(self, title):
         self.set_font('Arial', 'B', 12)
@@ -107,6 +107,11 @@ class PDF(FPDF):
         self.set_font('Arial', '', 12)
         self.multi_cell(0, 10, body)
         self.ln()
+
+    def add_image_from_base64(self, base64_data, x, y, w, h):
+        img_data = base64.b64decode(base64_data)
+        img_file = io.BytesIO(img_data)
+        self.image(img_file, x, y, w, h)
 
 # Login required decorator
 def login_required(f):
@@ -297,10 +302,12 @@ def admin():
     try:
         data = pd.read_csv('Rainfall.csv')
         logging.debug(f"Columns in Rainfall.csv: {data.columns.tolist()}")
-        # Verify column names
+        # Clean column names (strip spaces) and select expected columns
+        data.columns = data.columns.str.strip()
         expected_columns = ['pressure', 'dewpoint', 'humidity', 'cloud', 'sunshine', 'windspeed', 'rainfall']
-        if not all(col in data.columns for col in expected_columns):
-            flash('Invalid columns in Rainfall.csv! Expected: {expected_columns}. Found: {data.columns.tolist()}', 'danger')
+        available_columns = [col for col in expected_columns if col in data.columns]
+        if len(available_columns) != len(expected_columns):
+            flash(f'Invalid columns in Rainfall.csv! Expected: {expected_columns}. Found: {data.columns.tolist()}', 'danger')
             # Fallback with sample data
             data = pd.DataFrame({
                 'pressure': [1013.0, 1012.0],
@@ -312,6 +319,7 @@ def admin():
                 'rainfall': [1, 0]
             })
         else:
+            data = data[expected_columns]  # Select only expected columns
             # Rainfall Distribution
             plt.figure(figsize=(6, 4))
             sns.countplot(x='rainfall', data=data)
@@ -388,6 +396,135 @@ def admin():
 @no_cache
 def download_file(filename):
     return send_file(filename, as_attachment=True)
+
+@app.route('/download_insights')
+@login_required
+@no_cache
+def download_insights():
+    if db.session.get(User, session['user_id']).username != 'admin':
+        flash('Access denied!', 'danger')
+        return redirect(url_for('home'))
+
+    # Recalculate statistics
+    total_predictions = Prediction.query.count()
+    unique_users = db.session.query(Prediction.user_id).distinct().count()
+    avg_query = db.session.query(
+        db.func.avg(Prediction.pressure),
+        db.func.avg(Prediction.dewpoint),
+        db.func.avg(Prediction.humidity),
+        db.func.avg(Prediction.cloud),
+        db.func.avg(Prediction.sunshine),
+        db.func.avg(Prediction.windspeed)
+    ).first()
+    avg_inputs = tuple(0.0 if v is None else v for v in avg_query) if avg_query else (0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+
+    # Recalculate visualizations
+    plot_url1, plot_url2, plot_url3 = None, None, None
+    try:
+        data = pd.read_csv('Rainfall.csv')
+        data.columns = data.columns.str.strip()
+        expected_columns = ['pressure', 'dewpoint', 'humidity', 'cloud', 'sunshine', 'windspeed', 'rainfall']
+        available_columns = [col for col in expected_columns if col in data.columns]
+        if len(available_columns) != len(expected_columns):
+            data = pd.DataFrame({
+                'pressure': [1013.0, 1012.0],
+                'dewpoint': [15.0, 14.5],
+                'humidity': [60.0, 65.0],
+                'cloud': [50.0, 55.0],
+                'sunshine': [5.0, 4.5],
+                'windspeed': [10.0, 12.0],
+                'rainfall': [1, 0]
+            })
+        else:
+            data = data[expected_columns]
+            plt.figure(figsize=(6, 4))
+            sns.countplot(x='rainfall', data=data)
+            plt.title('Rainfall Distribution')
+            img1 = io.BytesIO()
+            plt.savefig(img1, format='png')
+            img1.seek(0)
+            plot_url1 = base64.b64encode(img1.getvalue()).decode()
+            plt.close()
+
+            plt.figure(figsize=(6, 4))
+            sns.scatterplot(x='humidity', y='rainfall', data=data)
+            plt.title('Humidity vs Rainfall')
+            img2 = io.BytesIO()
+            plt.savefig(img2, format='png')
+            img2.seek(0)
+            plot_url2 = base64.b64encode(img2.getvalue()).decode()
+            plt.close()
+    except FileNotFoundError:
+        data = pd.DataFrame({
+            'pressure': [1013.0, 1012.0],
+            'dewpoint': [15.0, 14.5],
+            'humidity': [60.0, 65.0],
+            'cloud': [50.0, 55.0],
+            'sunshine': [5.0, 4.5],
+            'windspeed': [10.0, 12.0],
+            'rainfall': [1, 0]
+        })
+
+    try:
+        pred_data = pd.read_sql_query(db.session.query(Prediction).statement, db.engine)
+        if not pred_data.empty:
+            pred_data['timestamp'] = pd.to_datetime(pred_data['timestamp'])
+            pred_data['date'] = pred_data['timestamp'].dt.date
+            trend = pred_data.groupby('date').size()
+            if len(trend) >= 1:
+                plt.figure(figsize=(6, 4))
+                trend.plot(kind='line', marker='o')
+                plt.title('Prediction Trend Over Time')
+                plt.xlabel('Date')
+                plt.ylabel('Number of Predictions')
+                plt.xticks(rotation=45)
+                plt.tight_layout()
+                img3 = io.BytesIO()
+                plt.savefig(img3, format='png', bbox_inches='tight')
+                img3.seek(0)
+                plot_url3 = base64.b64encode(img3.getvalue()).decode()
+                plt.close()
+    except Exception as e:
+        logging.error(f"Error generating prediction trend: {e}")
+
+    # Generate PDF
+    pdf = PDF()
+    pdf.add_page()
+    
+    # Add Statistics
+    pdf.chapter_title('Prediction Statistics')
+    pdf.chapter_body(f"Total Predictions: {total_predictions}\n")
+    pdf.chapter_body(f"Unique Users: {unique_users}\n")
+    pdf.chapter_body("Average Inputs:\n")
+    pdf.chapter_body(
+        f"Pressure: {round(avg_inputs[0] if avg_inputs[0] is not None else 0.0, 2)} hPa\n"
+        f"Dewpoint: {round(avg_inputs[1] if avg_inputs[1] is not None else 0.0, 2)} °C\n"
+        f"Humidity: {round(avg_inputs[2] if avg_inputs[2] is not None else 0.0, 2)} %\n"
+        f"Cloud Cover: {round(avg_inputs[3] if avg_inputs[3] is not None else 0.0, 2)} %\n"
+        f"Sunshine: {round(avg_inputs[4] if avg_inputs[4] is not None else 0.0, 2)} hours\n"
+        f"Windspeed: {round(avg_inputs[5] if avg_inputs[5] is not None else 0.0, 2)} km/h\n"
+    )
+
+    # Add Visualizations
+    if plot_url1:
+        pdf.chapter_title('Rainfall Distribution')
+        pdf.add_image_from_base64(plot_url1, 10, pdf.get_y(), 190, 80)
+        pdf.ln(85)
+    if plot_url2:
+        pdf.chapter_title('Humidity vs Rainfall')
+        pdf.add_image_from_base64(plot_url2, 10, pdf.get_y(), 190, 80)
+        pdf.ln(85)
+    if plot_url3:
+        pdf.chapter_title('Prediction Trend Over Time')
+        pdf.add_image_from_base64(plot_url3, 10, pdf.get_y(), 190, 80)
+        pdf.ln(85)
+    else:
+        pdf.chapter_body('No prediction trend data available.')
+
+    # Save PDF
+    pdf_file = f'static/downloads/insights_{datetime.now().strftime("%Y%m%d_%H%M%S")}.pdf'
+    pdf.output(pdf_file)
+    return send_file(pdf_file, as_attachment=True, download_name='admin_insights.pdf')
 
 if __name__ == '__main__':
     app.run(debug=True)
